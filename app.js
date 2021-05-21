@@ -10,6 +10,7 @@ mongoose.connect("mongodb://localhost:27017/wikiDB", {
 const app = express();
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
+app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }));
@@ -71,18 +72,52 @@ app.route("/articles/:articleTitle")
     })
 
     .put((req, res) => {
-        Article.update({
-            name: req.params.articleTitle
+        Article.replaceOne({
+            title: req.params.articleTitle
         }, {
             title: req.body.title,
             content: req.body.content
         }, {
             overwrite: true
-        }, (err) => {
+        }, (err, updationRes) => {
             if (!err) {
+                console.log(updationRes.ok);
+                console.log(updationRes.n);
+                console.log(updationRes.nModified);
                 res.send("Successfully updated the article!");
             } else {
                 console.error(err);
+            }
+        });
+    })
+
+    .patch((req, res) => {
+        Article.updateOne({
+            title: req.params.articleTitle
+        }, {
+            $set: req.body
+        }, (err, writeOpRes) => {
+            if(err){
+                console.error(err);
+                res.status(404).send("Not found!");
+            }
+            else{
+                console.log(writeOpRes)
+                res.send("File field patched successfully");
+            }
+
+        });
+    })
+
+    .delete((req, res) =>{
+        Article.deleteOne({
+            title: req.params.articleTitle
+        }, (err) => {
+            if(err){
+                console.error(err);
+            }
+            else{
+                res.send("Article Deleted Successfully!");
             }
         });
     });
